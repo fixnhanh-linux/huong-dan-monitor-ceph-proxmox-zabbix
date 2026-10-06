@@ -8,65 +8,27 @@ Dự án này cung cấp một kịch bản (shell script) giúp triển khai t�
 
 Dưới đây là sơ đồ kiến trúc tổng thể mô tả luồng dữ liệu giám sát đi từ hạ tầng Ceph lên tới Zabbix Server.
 
-```mermaid
-graph TD
-    %% Khoi Zabbix Server
-    subgraph Zabbix_Infrastructure ["Zabbix Infrastructure"]
-        ZS[("Zabbix Server / Proxy\n(10.8.10.201)")]
-        ZWeb["Zabbix Web UI\n(Cau hinh Template & Macro)"]
-        ZS --- ZWeb
-    end
-
-    %% Khoi Cum Proxmox VE
-    subgraph Proxmox_Cluster ["Proxmox VE Cluster (5 Nodes)"]
-        
-        %% Node 1 (Active Ceph Manager)
-        subgraph Node_1 ["Node 1 (172.17.66.121) - Active MGR"]
-            ZA1["Zabbix Agent 2\n(zabbix_agent2.conf)"]
-            
-            subgraph Ceph_Active ["Ceph Services"]
-                MGR1["Ceph MGR\n(RESTful API - Port 8003)"]
-                MON1["Ceph MON"]
-                OSD1["Ceph OSDs"]
-            end
-            
-            Cron1["Cronjob (moi phut)\nceph health > cephstatus.txt"]
-            
-            %% Luong du lieu trong Node 1
-            ZA1 -- "Zabbix Plugin Ceph\n(Goi API HTTPS qua Port 8003)" --> MGR1
-            ZA1 -. "system.run\n(Du phong)" .-> Cron1
-        end
-
-        %% Node 2 (Standby Ceph Manager)
-        subgraph Node_2 ["Node 2 (172.17.66.122) - Standby MGR"]
-            ZA2["Zabbix Agent 2"]
-            MGR2["Ceph MGR (Standby)"]
-            OSD2["Ceph OSDs"]
-            
-            ZA2 -. "Cho kich hoat\nneu Node 1 down" .-> MGR2
-        end
-
-        %% Cac node con lai
-        subgraph Node_N ["Cac Node Khac (123, 124, 125)"]
-            ZAN["Zabbix Agent 2"]
-            OSDN["Ceph OSDs"]
-        end
-    end
-
-    %% Luong giao tiep mang
-    ZS == "Truy van Active/Passive\n(Port 10050/10051)" === ZA1
-    ZS == "Truy van Active/Passive\n(Port 10050/10051)" === ZA2
-    ZS == "Truy van Active/Passive\n(Port 10050/10051)" === ZAN
-
-    %% Chu thich mau sac
-    classDef zabbix fill:#d32f2f,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef cephmgr fill:#388e3c,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef agent fill:#1976d2,stroke:#fff,stroke-width:2px,color:#fff;
-    
-    class ZS,ZWeb zabbix;
-    class MGR1,MGR2 cephmgr;
-    class ZA1,ZA2,ZAN agent;
-
+```text
++-------------------------------------------------------------+
+|                     ZABBIX SERVER                           |
+|                      (10.8.10.201)                          |
++-------------------------------------------------------------+
+          ^                                 ^
+          | (Truy vấn Port 10050/10051)     |
+          v                                 v
++-----------------------+         +-----------------------+
+|  NODE 1 (Active MGR)  |         | NODE 2 (Standby MGR)  |
+|    (172.17.66.121)    |         |    (172.17.66.122)    |
+|-----------------------|         |-----------------------|
+| [ Zabbix Agent 2 ]    |         | [ Zabbix Agent 2 ]    |
+|          |            |         |          |            |
+|          v (Gọi API)  |         |          v (Chờ)      |
+| [ Ceph MGR :8003 ]    |         | [ Ceph MGR (Standby)] |
+| [ Ceph MON / OSD ]    |         | [ Ceph MON / OSD ]    |
+|          |            |         |                       |
+|          v (Dự phòng) |         |                       |
+| [ cephstatus.txt ]    |         |                       |
++-----------------------+         +-----------------------+
 ```
 
 ---
