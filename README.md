@@ -57,5 +57,5 @@ Sau khi script hoàn thành, bạn sẽ nhận được một bảng thông báo
 ---
 
 ## 📐 Sơ đồ Kiến Trúc
-Dự án có đi kèm file `So-Do-Monitor-Ceph-Proxmox-Zabbix.drawio` mô tả chi tiết cách Zabbix Server truy vấn API Ceph thông qua Zabbix Agent 2. 
+Dự án có đi kèm file `docs/So-Do-Monitor-Ceph-Proxmox-Zabbix.drawio` mô tả chi tiết cách Zabbix Server truy vấn API Ceph thông qua Zabbix Agent 2. 
 Bạn có thể mở bằng công cụ [Draw.io](https://app.diagrams.net/) để xem cấu trúc và luồng dữ liệu.
